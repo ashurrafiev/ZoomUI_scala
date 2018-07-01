@@ -18,10 +18,7 @@ class SvgDefs {
 	val defs = new mutable.HashMap[String, Object]()
 
 	private def readStops(e: Elem): Seq[(Float, Color)] =
-		(e \ "_").filter( _ match {
-			case ce: Elem if ce.label == "stop" => true
-			case _ => false
-		} ).map( ce => (
+		(e \ "stop").map( ce => (
 			(ce \ "@offset").text.toFloat,
 			(ce \ "@style").text.split("""\s*;\s*""").foldLeft(Color.WHITE) { (c, v) => {
 				def col(color: Color, a: Int): Color = new Color((color.getRGB & 0xffffff) | (a << 24), true)
