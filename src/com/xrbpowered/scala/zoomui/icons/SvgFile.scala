@@ -197,7 +197,7 @@ class SvgFile(uri: String) {
 		path
 	}
 
-	private def render(g2: Graphics2D, g: Elem, defs: SvgDefs, parentStyle: SvgStyle, scale: Double, d: Int): Unit =
+	private def render(g2: Graphics2D, g: Elem, defs: SvgDefs, parentStyle: SvgStyle, scale: Double): Unit =
 		(g \ "_").foreach { _ match { case e: Elem =>
 			val style = SvgStyle.forElement(parentStyle, defs, e)
 
@@ -205,7 +205,7 @@ class SvgFile(uri: String) {
 			g2.transform(getTransform((e \ "@transform").text, scale))
 
 			e.label match {
-				case "g" => render(g2, e, defs, style, scale, d+1)
+				case "g" => render(g2, e, defs, style, scale)
 				case "defs" => defs.addDefs(e, scale)
 				case "rect" =>
 					val x = getAttrValue(e \ "@x", scale)
@@ -258,7 +258,7 @@ class SvgFile(uri: String) {
 		} }
 
 	def render(g2: Graphics2D, scale: Double): Unit =
-		root.foreach { render(g2, _, new SvgDefs, SvgStyle.Default, scale, 0) }
+		root.foreach { render(g2, _, new SvgDefs, SvgStyle.Default, scale) }
 
 	private def getPath(pathId: String, transform: AffineTransform, g: Elem, scale: Double): Option[Path2D] = {
 		(g \ "_").foreach { _ match { case e: Elem =>
@@ -288,10 +288,7 @@ class SvgFile(uri: String) {
 object SvgFile {
 	def getTransform(tr: String, scale: Double): AffineTransform = {
 		val tx = new AffineTransform
-		if (tr == null || tr.isEmpty) return tx
-		val m = Pattern.compile("([a-z]+)\\((.*?)\\)").matcher(tr)
-		var offs = 0
-		while (m.find(offs)) {
+		for (m <- "([a-z]+)\\((.*?)\\)".r.findAllMatchIn(tr)) {
 			val t = m.group(1)
 			val s = m.group(2).split("[\\,\\s]\\s*")
 			if (t == "translate") {
@@ -312,7 +309,6 @@ object SvgFile {
 					s(4).toDouble * scale, s(5).toDouble * scale))
 				tx.concatenate(tm)
 			}
-			offs = m.end
 		}
 		tx
 	}
