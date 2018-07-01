@@ -14,6 +14,10 @@ case class SvgStyle(fill: Option[Paint], strokeColor: Option[Color], strokeWidth
 		g2.setStroke(new BasicStroke((strokeWidth*scale).toFloat))
 		strokeColor.foreach { c => g2.setColor(c) }
 	}
+	
+	def withFill(fill: Option[Paint]) = SvgStyle(fill, strokeColor, strokeWidth);
+	def withStrokeColor(strokeColor: Option[Color]) = SvgStyle(fill, strokeColor, strokeWidth);
+	def withStrokeWidth(strokeWidth: Double) = SvgStyle(fill, strokeColor, strokeWidth);
 }
 object SvgStyle {
 	val Default = SvgStyle(Some(Color.BLACK), None, 1.0)
@@ -39,27 +43,22 @@ object SvgStyle {
 		}
 		else None
 
-	def forElement(parent: SvgStyle, defs: SvgDefs, e: Elem): SvgStyle = {
-		(e \ "@style").text match {
-			case attr if !attr.isEmpty =>
-				var fill = parent.fill
-				var strokeColor = parent.strokeColor
-				var strokeWidth = parent.strokeWidth
-				val vals = attr.split(";")
-				for (v <- vals) {
-					val kv = v.split(":", 2)
-					kv(0) = kv(0).trim
-					kv(1) = kv(1).trim
-					if (kv(0) == "fill") fill = parseFill(kv(1), defs)
-					else if (kv(0) == "stroke") strokeColor = parseColor(kv(1))
-					else if (kv(0) == "stroke-width") {
+	def forElement(parent: SvgStyle, defs: SvgDefs, e: Elem): SvgStyle =
+		(e \ "@style").text.split("""\s*;\s*""").foldLeft(parent) { (s, v) => {
+			val kv = v.split("""\s*:\s*""", 2)
+			kv(0) match {
+				case "fill" =>
+					s.withFill(parseFill(kv(1), defs))
+				case "stroke" =>
+					s.withStrokeColor(parseColor(kv(1)))
+				case "stroke-width" =>
+					s.withStrokeWidth(
 						if (kv(1).endsWith("px"))
-							kv(1) = kv(1).substring(0, kv(1).length - 2)
-						strokeWidth = kv(1).toDouble
-					}
-				}
-				SvgStyle(fill, strokeColor, strokeWidth)
-			case _ => parent
-		}
-	}
+							kv(1).substring(0, kv(1).length - 2).toDouble
+						else
+							kv(1).toDouble
+					)
+				case _ => s
+			}
+		} }
 }

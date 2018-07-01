@@ -10,6 +10,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.xml.Elem
 import scala.xml.NodeSeq
+import scala.xml.PrefixedAttribute
 
 class SvgDefs {
 	import SvgDefs._
@@ -44,7 +45,6 @@ class SvgDefs {
 		(g \ "_").foreach { _ match { case e: Elem =>
 			val id = (e \ "@id").text
 			var obj: Object = null
-			
 			e.label match {
 				case "linearGradient" =>
 					var p1: Point2D = new Point2D.Double(0, 0)
@@ -53,8 +53,8 @@ class SvgDefs {
 	
 					var fractions = Array[Float]()
 					var colors = Array[Color]()
-	
-					defs.get((e \ "@xlink:href").text) match {
+					
+					defs.get((e \ s"@{$xlink}href").text) match {
 						case Some(grad: LinearGradientPaint) =>
 							p1 = grad.getStartPoint.clone.asInstanceOf[Point2D]
 							p2 = grad.getEndPoint.clone.asInstanceOf[Point2D]
@@ -93,7 +93,7 @@ class SvgDefs {
 					var fractions = Array[Float]()
 					var colors = Array[Color]()
 	
-					defs.get((e \ "@xlink:href").text) match {
+					defs.get((e \ s"@{$xlink}href").text) match {
 						case Some(grad: LinearGradientPaint) =>
 							spread = grad.getCycleMethod
 							fractions = grad.getFractions
@@ -136,6 +136,8 @@ class SvgDefs {
 	}
 }
 object SvgDefs {
+	val xlink = "http://www.w3.org/1999/xlink"
+
 	def getAttrValue(attr: NodeSeq, scale: Double, d: Double): Double =
 		attr.foldLeft(d)((_, s) => s.text.toDouble * scale)
 

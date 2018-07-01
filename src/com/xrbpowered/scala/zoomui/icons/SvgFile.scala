@@ -5,13 +5,16 @@ import java.awt.geom.{AffineTransform, Arc2D, Path2D, Point2D}
 import java.util.regex.Pattern
 
 import javax.xml.parsers.DocumentBuilderFactory
-import org.w3c.dom.{Element, Node}
 import java.io.InputStream
 import java.io.FileInputStream
 import java.io.File
 import scala.xml.XML
 import scala.xml.Elem
 import scala.xml.NodeSeq
+import scala.xml.Node
+import java.awt.geom.Rectangle2D
+import java.awt.geom.RoundRectangle2D
+import java.awt.geom.Ellipse2D
 
 class SvgFile(uri: String) {
 	import SvgFile._
@@ -113,89 +116,133 @@ class SvgFile(uri: String) {
 
 	private def createPath(d: String, scale: Double): Path2D = {
 		val path = new Path2D.Double
-		val s: Array[String] = d.split("[\\,\\s]\\s*")
-		var cmd = '\u0000'
-		var i = 0
-		while (i<s.length) {
-			val c = s(i).charAt(0)
-			if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z') {
-				cmd = c
-				i += 1
+		
+		def nextCmd(i: Int, cmd: Char, s: Seq[String]): Unit =
+			if (i<s.length) s(i)(0) match {
+				case c if (c>='A' && c<='Z' || c>='a' && c<='z') => next(i+1, c, s)
+				case _ => next(i, cmd, s)
 			}
+
+		def next(i: Int, cmd: Char, s: Seq[String]): Unit = {
 			val cur = path.getCurrentPoint
 			val (dx, dy): (Double, Double) = if (cur != null) (cur.getX, cur.getY) else (0, 0)
 			cmd match {
 				case 'M' =>
 					path.moveTo(s(i).toDouble * scale, s(i + 1).toDouble * scale)
-					i += 2
-					cmd = 'L'
+					nextCmd(i + 2, 'L', s)
 				case 'm' =>
 					path.moveTo(s(i).toDouble * scale + dx, s(i + 1).toDouble * scale + dy)
-					i += 2
-					cmd = 'l'
+					nextCmd(i + 2, 'l', s)
 				case 'L' =>
 					path.lineTo(s(i).toDouble * scale, s(i + 1).toDouble * scale)
-					i += 2
+					nextCmd(i + 2, cmd, s)
 				case 'l' =>
 					path.lineTo(s(i).toDouble * scale + dx, s(i + 1).toDouble * scale + dy)
-					i += 2
+					nextCmd(i + 2, cmd, s)
 				case 'V' =>
 					path.lineTo(dx, s(i).toDouble * scale)
-					i += 1
+					nextCmd(i + 1, cmd, s)
 				case 'v' =>
 					path.lineTo(dx, s(i).toDouble * scale + dy)
-					i += 1
+					nextCmd(i + 1, cmd, s)
 				case 'H' =>
 					path.lineTo(s(i).toDouble * scale, dy)
-					i += 1
+					nextCmd(i + 1, cmd, s)
 				case 'h' =>
 					path.lineTo(s(i).toDouble * scale + dx, dy)
-					i += 1
+					nextCmd(i + 1, cmd, s)
 				case 'C' =>
 					path.curveTo(
 						s(i).toDouble * scale, s(i + 1).toDouble * scale,
 						s(i + 2).toDouble * scale, s(i + 3).toDouble * scale,
 						s(i + 4).toDouble * scale, s(i + 5).toDouble * scale)
-					i += 6
+					nextCmd(i + 6, cmd, s)
 				case 'c' =>
 					path.curveTo(
 						s(i).toDouble * scale + dx, s(i + 1).toDouble * scale + dy,
 						s(i + 2).toDouble * scale + dx, s(i + 3).toDouble * scale + dy,
 						s(i + 4).toDouble * scale + dx, s(i + 5).toDouble * scale + dy)
-					i += 6
+					nextCmd(i + 6, cmd, s)
 				case 'Q' =>
 					path.quadTo(
 						s(i).toDouble * scale, s(i + 1).toDouble * scale,
 						s(i + 2).toDouble * scale, s(i + 3).toDouble * scale)
-					i += 4
+					nextCmd(i + 4, cmd, s)
 				case 'q' =>
 					path.quadTo(
 						s(i).toDouble * scale + dx, s(i + 1).toDouble * scale + dy,
 						s(i + 2).toDouble * scale + dx, s(i + 3).toDouble * scale + dy)
-					i += 4
+					nextCmd(i + 4, cmd, s)
 				case 'A' =>
 					arcTo(path,
 						s(i).toDouble * scale, s(i + 1).toDouble * scale, s(i + 2).toDouble,
 						s(i + 3).toInt != 0, s(i + 4).toInt != 0,
 						s(i + 5).toDouble * scale, s(i + 6).toDouble * scale)
-					i += 7
+					nextCmd(i + 7, cmd, s)
 				case 'a' =>
 					arcTo(path,
 						s(i).toDouble * scale, s(i + 1).toDouble * scale, s(i + 2).toDouble,
 						s(i + 3).toInt != 0, s(i + 4).toInt != 0,
 						s(i + 5).toDouble * scale + dx, s(i + 6).toDouble * scale + dy)
-					i += 7
+					nextCmd(i + 7, cmd, s)
 				case 'Z' | 'z' =>
 					path.closePath()
+					nextCmd(i, 0, s)
 				case _ =>
-					if (cmd != '\u0000')
+					if (cmd != 0)
 						System.err.println(s"Unknown path command: $cmd")
-					cmd = '\u0000'
-					i += 1
+					nextCmd(i + 1, 0, s)
 			}
 		}
+		
+		nextCmd(0, 0, d.split("""[\,\s]\s*"""));
 		path
 	}
+	
+	private def createRect(e: Elem, scale: Double): Path2D = {
+		val x = getAttrValue(e \ "@x", scale)
+		val y = getAttrValue(e \ "@y", scale)
+		val width = getAttrValue(e \ "@width", scale)
+		val height = getAttrValue(e \ "@height", scale)
+		val ry = getAttrValue(e \ "@ry", scale * 2.0)
+		val rx = getAttrValue(e \ "@rx", scale * 2.0) match {
+			case x if x <= 0 => ry
+			case x => x
+		}
+		
+		val path = new Path2D.Double
+		if(ry<=0)
+			path.append(new Rectangle2D.Double(x, y, width, height), false);
+		else
+			path.append(new RoundRectangle2D.Double(x, y, width, height, rx, ry), false);
+		path
+	}
+	
+	private def createCircle(e: Elem, scale: Double): Path2D = {
+		val cx = (e \ "@cx").text.toDouble * scale
+		val cy = (e \ "@cy").text.toDouble * scale
+		val r = (e \ "@r").text.toDouble * scale
+		val x = (cx - r).toInt
+		val y = (cy - r).toInt
+		val width = (r * 2.0).toInt
+		
+		val path = new Path2D.Double
+		path.append(new Ellipse2D.Double(x, y, width, width), false);
+		path
+	}
+	
+	private def render(g2: Graphics2D, style: SvgStyle, scale: Double, path: Path2D): Unit = {
+		if (style.hasFill) {
+			style.setFillStyle(g2)
+			g2.fill(path)
+		}
+		if (style.hasStroke) {
+			style.setStrokeStyle(g2, scale)
+			g2.draw(path)
+		}
+	}
+	
+	private def transformed(t: AffineTransform, path: Path2D): Path2D = { path.transform(t); path }
 
 	private def render(g2: Graphics2D, g: Elem, defs: SvgDefs, parentStyle: SvgStyle, scale: Double): Unit =
 		(g \ "_").foreach { _ match { case e: Elem =>
@@ -208,50 +255,11 @@ class SvgFile(uri: String) {
 				case "g" => render(g2, e, defs, style, scale)
 				case "defs" => defs.addDefs(e, scale)
 				case "rect" =>
-					val x = getAttrValue(e \ "@x", scale)
-					val y = getAttrValue(e \ "@y", scale)
-					val width = getAttrValue(e \ "@width", scale)
-					val height = getAttrValue(e \ "@height", scale)
-					val ry = getAttrValue(e \ "@ry", scale * 2.0)
-					val rx = getAttrValue(e \ "@rx", scale * 2.0) match {
-						case x if x <= 0 => ry
-						case x => x
-					}
-					if (style.hasFill) {
-						style.setFillStyle(g2)
-						if (ry <= 0) g2.fillRect(x, y, width, height)
-						else g2.fillRoundRect(x, y, width, height, rx, ry)
-					}
-					if (style.hasStroke) {
-						style.setStrokeStyle(g2, scale)
-						if (ry <= 0) g2.drawRect(x, y, width, height)
-						else g2.drawRoundRect(x, y, width, height, rx, ry)
-					}
+					render(g2, style, scale, createRect(e, scale))
 				case "circle" =>
-					val cx = (e \ "@cx").text.toDouble * scale
-					val cy = (e \ "@cy").text.toDouble * scale
-					val r = (e \ "@r").text.toDouble * scale
-					val x = (cx - r).toInt
-					val y = (cy - r).toInt
-					val width = (r * 2.0).toInt
-					if (style.hasFill) {
-						style.setFillStyle(g2)
-						g2.fillOval(x, y, width, width)
-					}
-					if (style.hasStroke) {
-						style.setStrokeStyle(g2, scale)
-						g2.drawOval(x, y, width, width)
-					}
+					render(g2, style, scale, createCircle(e, scale))
 				case "path" =>
-					val path = createPath((e \ "@d").text, scale)
-					if (style.hasFill) {
-						style.setFillStyle(g2)
-						g2.fill(path)
-					}
-					if (style.hasStroke) {
-						style.setStrokeStyle(g2, scale)
-						g2.draw(path)
-					}
+					render(g2, style, scale, createPath((e \ "@d").text, scale))
 				case _ => ()
 			}
 			g2.setTransform(t)
@@ -261,25 +269,26 @@ class SvgFile(uri: String) {
 		root.foreach { render(g2, _, new SvgDefs, SvgStyle.Default, scale) }
 
 	private def getPath(pathId: String, transform: AffineTransform, g: Elem, scale: Double): Option[Path2D] = {
-		(g \ "_").foreach { _ match { case e: Elem =>
+		def findChild(i: Iterator[Node]): Option[Path2D] = if(!i.hasNext) None else i.next match {
+			case e: Elem =>
 				val t = new AffineTransform(transform)
 				t.concatenate(getTransform((e \ "@transform").text, scale))
 
 				e.label match {
 					case "g" =>
-						return getPath(pathId, t, e, scale)
-					case "rect" =>
-						// not supported, convert everything to paths
-					case "circle" =>
-						// not supported, convert everything to paths
+						getPath(pathId, t, e, scale)
+					case "rect" if (e \ "@id").text==pathId =>
+						Some(transformed(t, createRect(e, scale)))
+					case "circle" if (e \ "@id").text==pathId =>
+						Some(transformed(t, createCircle(e, scale)))
 					case "path" if (e \ "@id").text==pathId =>
-						val path = createPath((e \ "@d").text, scale)
-						path.transform(t)
-						return Some(path)
-					case _ => ()
+						Some(transformed(t, createPath((e \ "@d").text, scale)))
+					case _ => 
+						findChild(i)
 				}
-		} }
-		None
+			case _ => findChild(i)
+		}
+		findChild((g \ "_").iterator)
 	}
 
 	def getPath(pathId: String, scale: Double): Option[Path2D] =
@@ -288,31 +297,28 @@ class SvgFile(uri: String) {
 object SvgFile {
 	def getTransform(tr: String, scale: Double): AffineTransform = {
 		val tx = new AffineTransform
-		for (m <- "([a-z]+)\\((.*?)\\)".r.findAllMatchIn(tr)) {
-			val t = m.group(1)
-			val s = m.group(2).split("[\\,\\s]\\s*")
-			if (t == "translate") {
-				val x = s(0).toDouble * scale
-				val y = if (s.length < 2) 0.0
-				else s(1).toDouble * scale
-				tx.translate(x, y)
-			}
-			else if (t == "scale") {
-				val x = s(0).toDouble
-				val y = if (s.length < 2) x
-				else s(1).toDouble
-				tx.scale(x, y)
-			}
-			else if (t == "matrix") {
-				val tm = new AffineTransform(Array[Double](
-					s(0).toDouble, s(1).toDouble, s(2).toDouble, s(3).toDouble,
-					s(4).toDouble * scale, s(5).toDouble * scale))
-				tx.concatenate(tm)
+		for (m <- """([a-z]+)\((.*?)\)""".r.findAllMatchIn(tr)) {
+			val s = m.group(2).split("""[\,\s]\s*""")
+			m.group(1) match {
+				case "translate" =>
+					val x = s(0).toDouble * scale
+					val y = if (s.length < 2) 0.0 else s(1).toDouble * scale
+					tx.translate(x, y)
+				case "scale" =>
+					val x = s(0).toDouble
+					val y = if (s.length < 2) x else s(1).toDouble
+					tx.scale(x, y)
+				case "matrix" =>
+					val tm = new AffineTransform(Array[Double](
+						s(0).toDouble, s(1).toDouble, s(2).toDouble, s(3).toDouble,
+						s(4).toDouble * scale, s(5).toDouble * scale))
+					tx.concatenate(tm)
+				case _ => ()
 			}
 		}
 		tx
 	}
 
-	private def getAttrValue(attr: NodeSeq, scale: Double): Int =
-		attr.foldLeft(0)((_, s) => (s.text.toDouble * scale).toInt)
+	private def getAttrValue(attr: NodeSeq, scale: Double): Double =
+		attr.foldLeft(0.0)((_, s) => s.text.toDouble * scale)
 }
