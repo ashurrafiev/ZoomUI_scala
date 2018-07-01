@@ -4,6 +4,10 @@
 #Scala IDE
 .cache*
 
+#Libraries
+/lib/
+/lib_src/
+
 # Log file
 *.log
 

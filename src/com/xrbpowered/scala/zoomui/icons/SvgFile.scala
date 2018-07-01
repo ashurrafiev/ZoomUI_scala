@@ -9,18 +9,21 @@ import org.w3c.dom.{Element, Node}
 import java.io.InputStream
 import java.io.FileInputStream
 import java.io.File
+import scala.xml.XML
+import scala.xml.Elem
+import scala.xml.NodeSeq
 
 class SvgFile(uri: String) {
 	import SvgFile._
 
-	val root: Option[Element] = try {
+	val root: Option[Elem] = try {
 		val in: InputStream = ClassLoader.getSystemResourceAsStream(uri) match {
 			case null => new FileInputStream(new File(uri))
 			case in => in
 		}
-		val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(in)
+		val xml = XML.load(in)
 		in.close()
-		Some(doc.getDocumentElement)
+		Some(xml)
 	}
 	catch {
 		case e: Exception => e.printStackTrace(); None
@@ -194,26 +197,26 @@ class SvgFile(uri: String) {
 		path
 	}
 
-	private def render(g2: Graphics2D, g: Element, defs: SvgDefs, parentStyle: SvgStyle, scale: Double, d: Int): Unit = {
-		var n = g.getFirstChild
-		while (n != null) {
-			if (n.getNodeType == Node.ELEMENT_NODE) {
-				val e = n.asInstanceOf[Element]
-				val style = SvgStyle.forElement(parentStyle, defs, e)
+	private def render(g2: Graphics2D, g: Elem, defs: SvgDefs, parentStyle: SvgStyle, scale: Double, d: Int): Unit =
+		(g \ "_").foreach { _ match { case e: Elem =>
+			val style = SvgStyle.forElement(parentStyle, defs, e)
 
-				val t = g2.getTransform
-				g2.transform(getTransform(e.getAttribute("transform"), scale))
+			val t = g2.getTransform
+			g2.transform(getTransform((e \ "@transform").text, scale))
 
-				if (e.getNodeName.equals("g")) render(g2, e, defs, style, scale, d+1)
-				else if (e.getNodeName.equals("defs")) defs.addDefs(e, scale)
-				else if (e.getNodeName.equals("rect")) {
-					val x = getAttrValue(e, "x", scale)
-					val y = getAttrValue(e, "y", scale)
-					val width = getAttrValue(e, "width", scale)
-					val height = getAttrValue(e, "height", scale)
-					var rx = getAttrValue(e, "rx", scale * 2.0)
-					val ry = getAttrValue(e, "ry", scale * 2.0)
-					if (rx <= 0) rx = ry
+			e.label match {
+				case "g" => render(g2, e, defs, style, scale, d+1)
+				case "defs" => defs.addDefs(e, scale)
+				case "rect" =>
+					val x = getAttrValue(e \ "@x", scale)
+					val y = getAttrValue(e \ "@y", scale)
+					val width = getAttrValue(e \ "@width", scale)
+					val height = getAttrValue(e \ "@height", scale)
+					val ry = getAttrValue(e \ "@ry", scale * 2.0)
+					val rx = getAttrValue(e \ "@rx", scale * 2.0) match {
+						case x if x <= 0 => ry
+						case x => x
+					}
 					if (style.hasFill) {
 						style.setFillStyle(g2)
 						if (ry <= 0) g2.fillRect(x, y, width, height)
@@ -224,11 +227,10 @@ class SvgFile(uri: String) {
 						if (ry <= 0) g2.drawRect(x, y, width, height)
 						else g2.drawRoundRect(x, y, width, height, rx, ry)
 					}
-				}
-				else if (e.getNodeName.equals("circle")) {
-					val cx = e.getAttribute("cx").toDouble * scale
-					val cy = e.getAttribute("cy").toDouble * scale
-					val r = e.getAttribute("r").toDouble * scale
+				case "circle" =>
+					val cx = (e \ "@cx").text.toDouble * scale
+					val cy = (e \ "@cy").text.toDouble * scale
+					val r = (e \ "@r").text.toDouble * scale
 					val x = (cx - r).toInt
 					val y = (cy - r).toInt
 					val width = (r * 2.0).toInt
@@ -240,9 +242,8 @@ class SvgFile(uri: String) {
 						style.setStrokeStyle(g2, scale)
 						g2.drawOval(x, y, width, width)
 					}
-				}
-				else if (e.getNodeName.equals("path")) {
-					val path = createPath(e.getAttribute("d"), scale)
+				case "path" =>
+					val path = createPath((e \ "@d").text, scale)
 					if (style.hasFill) {
 						style.setFillStyle(g2)
 						g2.fill(path)
@@ -251,41 +252,33 @@ class SvgFile(uri: String) {
 						style.setStrokeStyle(g2, scale)
 						g2.draw(path)
 					}
-				}
-				g2.setTransform(t)
+				case _ => ()
 			}
-			n = n.getNextSibling
-		}
-	}
+			g2.setTransform(t)
+		} }
 
 	def render(g2: Graphics2D, scale: Double): Unit =
 		root.foreach { render(g2, _, new SvgDefs, SvgStyle.Default, scale, 0) }
 
-	private def getPath(pathId: String, transform: AffineTransform, g: Element, scale: Double): Option[Path2D] = {
-		var n = g.getFirstChild
-		while (n != null) {
-			if (n.getNodeType == Node.ELEMENT_NODE) {
-				val e = n.asInstanceOf[Element]
-
+	private def getPath(pathId: String, transform: AffineTransform, g: Elem, scale: Double): Option[Path2D] = {
+		(g \ "_").foreach { _ match { case e: Elem =>
 				val t = new AffineTransform(transform)
-				t.concatenate(getTransform(e.getAttribute("transform"), scale))
+				t.concatenate(getTransform((e \ "@transform").text, scale))
 
-				if (e.getNodeName.equals("g"))
-					return getPath(pathId, t, e, scale)
-				else if (e.getNodeName.equals("rect")) {
-					// not supported, convert everything to paths
+				e.label match {
+					case "g" =>
+						return getPath(pathId, t, e, scale)
+					case "rect" =>
+						// not supported, convert everything to paths
+					case "circle" =>
+						// not supported, convert everything to paths
+					case "path" if (e \ "@id").text==pathId =>
+						val path = createPath((e \ "@d").text, scale)
+						path.transform(t)
+						return Some(path)
+					case _ => ()
 				}
-				else if (e.getNodeName.equals("circle")) {
-					// not supported, convert everything to paths
-				}
-				else if (e.getNodeName.equals("path")) if (e.getAttribute("id").equals(pathId)) {
-					val path = createPath(e.getAttribute("d"), scale)
-					path.transform(t)
-					return Some(path)
-				}
-			}
-			n = n.getNextSibling
-		}
+		} }
 		None
 	}
 
@@ -324,8 +317,6 @@ object SvgFile {
 		tx
 	}
 
-	private def getAttrValue(e: Element, name: String, scale: Double): Int = {
-		val s = e.getAttribute(name)
-		if (s.isEmpty) 0 else (s.toDouble * scale).toInt
-	}
+	private def getAttrValue(attr: NodeSeq, scale: Double): Int =
+		attr.foldLeft(0)((_, s) => (s.text.toDouble * scale).toInt)
 }
