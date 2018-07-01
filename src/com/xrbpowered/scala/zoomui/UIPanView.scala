@@ -40,11 +40,18 @@ class UIPanView(parent: UIContainer) extends UIContainer(parent) {
 		else 0
 	) }
 
+	def setPan(x: Float, y:Float): Unit = {
+		_pan = (x, y)
+		checkPanRange()
+	}
 	def pan(dx: Float, dy: Float): Unit = {
 		_pan = (_pan._1 - dx, _pan._2 - dy)
 		checkPanRange()
 	}
-	def resetPan(): Unit = { _pan = (0, 0) }
+	def resetPan(): Unit = { 
+		_pan = (0, 0)
+		checkPanRange();
+	}
 
 	override def parentToLocal(pos: (Float, Float)): (Float, Float) = {
 		val p = super.parentToLocal(pos)

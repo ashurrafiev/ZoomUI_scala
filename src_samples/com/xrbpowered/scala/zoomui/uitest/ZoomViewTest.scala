@@ -39,7 +39,7 @@ class ZoomViewTest(parent: UIContainer) extends UIZoomView(parent) {
 		onHrefClicked = (_, href) => println(s"[$href] clicked")
 	}
 
-	pan(64, 0)
+	setPan(-64, 0)
 
 	override def layout(): Unit = {
 		btn1.location = (16, 16)

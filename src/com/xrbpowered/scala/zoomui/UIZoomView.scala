@@ -3,7 +3,7 @@ package com.xrbpowered.scala.zoomui
 class UIZoomView(parent: UIContainer) extends UIPanView(parent) {
 	import UIElement._
 
-	var scale = 1f
+	protected var _scale = 1f
 	private var _scaleRange: (Float, Float) = (0.1f, 3.0f)
 	def scaleRange: (Float, Float) = _scaleRange
 	def scaleRange_= (range: (Float, Float)): Unit = {
@@ -12,28 +12,40 @@ class UIZoomView(parent: UIContainer) extends UIPanView(parent) {
 	}
 
 	private def checkScaleRange(): Unit = {
-		scale = scale max _scaleRange._1 min _scaleRange._2
+		_scale = _scale max _scaleRange._1 min _scaleRange._2
 	}
-	def resetScale(): Unit = { scale = 1f }
+	def resetScale(): Unit = {
+		_scale = 1f
+		checkScaleRange()
+	}
+	def setScale(s: Float): Unit = {
+		_scale = s
+		checkScaleRange()
+	}
+	def scale(ds: Float): Unit = {
+		_scale *= ds
+		checkScaleRange()
+	}
 
-	override def pan(dx: Float, dy: Float): Unit = super.pan(dx * scale, dy * scale)
+	override def setPan(x: Float, y: Float): Unit = super.setPan(x * _scale, y * _scale)
+	override def pan(dx: Float, dy: Float): Unit = super.pan(dx * _scale, dy * _scale)
 
-	override def pixelScale: Float = super.pixelScale / scale
+	override def pixelScale: Float = super.pixelScale / _scale
 
 	override def parentToLocal(pos: (Float, Float)): (Float, Float) = {
 		val p = super.parentToLocal(pos)
-		(p._1 / scale, p._2 / scale)
+		(p._1 / _scale, p._2 / _scale)
 	}
 
 	override protected def applyTransform(g: GraphAssist): Unit = {
 		super.applyTransform(g)
-		g.scale(scale)
+		g.scale(_scale)
 	}
 
 	override def mouseScroll(pos: (Float, Float), delta: Float, mods: Set[Modifier]): Boolean =
 		super.mouseScroll(pos, delta, mods) || (
 			if (mods == Ctrl) repaint {
-				scale *= 1.0f + delta * 0.2f
+				_scale *= 1.0f + delta * 0.2f
 				checkScaleRange()
 				true
 			}

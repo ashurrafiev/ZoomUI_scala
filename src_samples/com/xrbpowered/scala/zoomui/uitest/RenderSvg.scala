@@ -16,17 +16,15 @@ class RenderSvg(parent: UIContainer) extends UIZoomView(parent) {
 
 	val svg = new SvgFile("drawing.svg")
 	
-	val view: UIElement = new UIElement(this) {
+	new UIElement(this) {
 		override def visible(clip: Rectangle): Boolean = visible
 		
 		override def paint(g: GraphAssist): Unit = {
 			g.graph.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
-			svg.render(g.graph, 1)
+			svg.render(g.graph, 10)
 		}
 	}
-	
-	scaleRange = (1, 100)
-	scale = 10
+	scaleRange = (0.1f, 10)
 	
 	override def paintSelf(g: GraphAssist): Unit =
 		g.fill(this, Color.WHITE)
@@ -35,7 +33,7 @@ class RenderSvg(parent: UIContainer) extends UIZoomView(parent) {
 object RenderSvg {
 	def main(args: Array[String]): Unit = {
 		UIWindow.baseScale = 1
-		val frame = new SwingFrame("ZoomViewTest", 800, 600)
+		val frame = new SwingFrame("RenderSvg", 1800, 960)
 		new RenderSvg(frame.container)
 		frame.show
 	}
