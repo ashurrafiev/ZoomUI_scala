@@ -17,35 +17,28 @@ class SvgDefs {
 
 	val defs = new mutable.HashMap[String, Object]()
 
-	private def readStops(e: Elem): ArrayBuffer[(Float, Color)] = {
-		val stops = new ArrayBuffer[(Float, Color)]
-		(e \ "_").foreach { _ match { case ce: Elem if ce.label == "stop" =>
-			val offs = getAttrValue(ce \ "@offset", 1.0, 0.0).toFloat
-			val attr = (ce \ "@style").text
-			if (!attr.isEmpty) {
-				var color = Option.empty[Color]
-				var opacity = 1.0
-				val vals = attr.split(";")
-				for (v <- vals) {
-					val kv = v.split(":", 2)
-					kv(0) = kv(0).trim
-					kv(1) = kv(1).trim
-					if (kv(0) == "stop-color") color = SvgStyle.parseColor(kv(1))
-					else if (kv(0) == "stop-opacity") opacity = kv(1).toDouble
+	private def readStops(e: Elem): Seq[(Float, Color)] =
+		(e \ "_").filter( _ match {
+			case ce: Elem if ce.label == "stop" => true
+			case _ => false
+		} ).map( ce => (
+			(ce \ "@offset").text.toFloat,
+			(ce \ "@style").text.split("""\s*;\s*""").foldLeft(Color.WHITE) { (c, v) => {
+				def col(color: Color, a: Int): Color = new Color((color.getRGB & 0xffffff) | (a << 24), true)
+				val kv = v.split("""\s*:\s*""", 2)
+				kv(0) match {
+					case "stop-color" =>
+						col(SvgStyle.parseColor(kv(1)).get, c.getAlpha)
+					case "stop-opacity" =>
+						col(c, (kv(1).toDouble * 255.0).round.toInt)
+					case _ => c
 				}
-				if (color.isDefined) {
-					stops += ((offs, new Color(color.get.getRed, color.get.getGreen, color.get.getBlue, (opacity * 255.0).round.toInt)))
-				}
-			}
-		} }
-		stops
-	}
+			} }
+		) )
 
 	def addDefs(g: Elem, scale: Double): Unit = {
 		(g \ "_").foreach { _ match { case e: Elem =>
-			val id = (e \ "@id").text
-			var obj: Object = null
-			e.label match {
+			val obj: Option[Object] = e.label match {
 				case "linearGradient" =>
 					var p1: Point2D = new Point2D.Double(0, 0)
 					var p2: Point2D = new Point2D.Double(0, 0)
@@ -70,21 +63,17 @@ class SvgDefs {
 	
 					val stops = readStops(e)
 					if (stops.nonEmpty) {
-						val num = stops.size
-						fractions = new Array[Float](num)
-						colors = new Array[Color](num)
-						for(i <- stops.indices) {
-							val stop = stops(i)
-							fractions(i) = stop._1
-							colors(i) = stop._2
-						}
+						val (f, c) = stops.unzip
+						fractions = f.toArray
+						colors = c.toArray
 					}
 	
 					val tx = SvgFile.getTransform((e \ "@gradientTransform").text, scale)
 					tx.transform(p1, p1)
 					tx.transform(p2, p2)
 					if (p1.equals(p2)) p2.setLocation(p2.getX, p2.getY + 0.001)
-					obj = new LinearGradientPaint(p1.getX.toFloat, p1.getY.toFloat, p2.getX.toFloat, p2.getY.toFloat, fractions, colors, spread)
+					Some(new LinearGradientPaint(p1.getX.toFloat, p1.getY.toFloat, p2.getX.toFloat, p2.getY.toFloat, fractions, colors, spread))
+					
 				case "radialGradient" =>
 					var pc: Point2D = new Point2D.Double(0, 0)
 					var radius = 0.0
@@ -113,25 +102,22 @@ class SvgDefs {
 	
 					val stops = readStops(e)
 					if (stops.nonEmpty) {
-						val num = stops.size
-						fractions = new Array[Float](num)
-						colors = new Array[Color](num)
-						for(i <- stops.indices) {
-							val stop = stops(i)
-							fractions(i) = stop._1
-							colors(i) = stop._2
-						}
+						val (f, c) = stops.unzip
+						fractions = f.toArray
+						colors = c.toArray
 					}
 	
 					val tx = SvgFile.getTransform((e \ "@gradientTransform").text, scale)
 					tx.transform(pc, pc)
 					radius *= tx.getScaleX
-					obj = new RadialGradientPaint(pc.getX.toFloat, pc.getY.toFloat, radius.toFloat, fractions, colors, spread)
+					Some(new RadialGradientPaint(pc.getX.toFloat, pc.getY.toFloat, radius.toFloat, fractions, colors, spread))
+					
+				case _ => None
+			}
+			(e \ "@id").text match {
+				case id if !id.isEmpty => obj.foreach(defs.put("#" + id, _))
 				case _ => ()
 			}
-
-			if (obj != null && !id.isEmpty)
-				defs.put("#" + id, obj)
 		} }
 	}
 }
