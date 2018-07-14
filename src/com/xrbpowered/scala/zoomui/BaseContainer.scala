@@ -61,15 +61,15 @@ class BaseContainer(_window: UIWindow, private var _baseScale: Float) extends UI
 	private def updateMouseMove(pos: (Float, Float)): Unit = {
 		val ui = elementAt(pos)
 		if (ui != uiUnderMouse) {
-			uiUnderMouse.foreach { _.mouseOut() }
-			ui.foreach { _.mouseIn() }
+			uiUnderMouse.foreach { e => if(e!=this) e.mouseOut() }
 			uiUnderMouse = ui
+			uiUnderMouse.foreach { e => if(e!=this) e.mouseIn() }
 		}
 	}
 	override def mouseMoved(pos: (Float, Float), mods: Set[Modifier]): Unit = {
 		if (!dragMode) {
 			updateMouseMove(pos)
-			uiUnderMouse.foreach { e => e.mouseMoved(e.baseToLocal(pos), mods) }
+			uiUnderMouse.foreach { e => if(e!=this) e.mouseMoved(e.baseToLocal(pos), mods) }
 		}
 	}
 	def mouseDragged(pos: (Float, Float)): Unit = {

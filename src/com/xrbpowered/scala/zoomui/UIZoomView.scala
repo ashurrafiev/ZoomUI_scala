@@ -45,8 +45,7 @@ class UIZoomView(parent: UIContainer) extends UIPanView(parent) {
 	override def mouseScroll(pos: (Float, Float), delta: Float, mods: Set[Modifier]): Boolean =
 		super.mouseScroll(pos, delta, mods) || (
 			if (mods == Ctrl) repaint {
-				_scale *= 1.0f + delta * 0.2f
-				checkScaleRange()
+				scale(1.0f + delta * 0.2f)
 				true
 			}
 			else false )

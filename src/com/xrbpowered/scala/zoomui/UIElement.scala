@@ -16,7 +16,8 @@ abstract class UIElement(val parent: Option[UIContainer]) {
 
 	private var _visible: Boolean = true
 	def visible: Boolean = _visible
-	def visible_= (v: Boolean): Unit = repaint { _visible = v }
+	def visible_= (v: Boolean): Unit =
+		_visible = v
 	def visible(clip: Rectangle): Boolean =
 		visible && !(clip.x-_x>width || clip.x-_x+clip.width<0 ||
 				clip.y-_y>height || clip.y-_y+clip.height<0)

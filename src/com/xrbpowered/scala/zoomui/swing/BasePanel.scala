@@ -10,6 +10,7 @@ class BasePanel(val window: UIWindow) extends JPanel {
 	import BasePanel._
 
 	setFocusable(true)
+	setFocusTraversalKeysEnabled(false)
 
 	addComponentListener(new ComponentAdapter {
 		override def componentResized(e: ComponentEvent):Unit = {
@@ -63,7 +64,7 @@ class BasePanel(val window: UIWindow) extends JPanel {
 		}
 	})
 
-	override def paint(g: Graphics): Unit = {
+	override def paintComponent(g: Graphics): Unit = {
 		window.container.paint(new GraphAssist(g.asInstanceOf[Graphics2D]))
 	}
 
