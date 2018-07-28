@@ -95,17 +95,15 @@ class UIFileView(parent: UIContainer, val groupTypes: Option[Array[String]],
 				val textWidth = fm.stringWidth(str)
 				g.drawString(str, 20, 2+font.getSize)
 
-				g.setStroke(2f)
 				g.setColor(colorText)
-				val w = (height/2f).toInt
+				val y = (height/2f).toInt
 				if (open)
-					g.graph.drawPolyline(Array[Int](6, 10, 14), Array[Int](w - 2, w + 2, w - 2), 3)
+					UIScrollBar.drawDownArrow(g, 10, y)
 				else
-					g.graph.drawPolyline(Array[Int](8, 12, 8), Array[Int](w - 4, w, w + 4), 3)
+					UIScrollBar.drawRightArrow(g, 10, y)
 
-				g.resetStroke()
 				g.setColor(colorBorderLight)
-				g.line(textWidth + 28, w, width - 8, w)
+				g.line(textWidth + 28, y, width - 8, y)
 			}
 
 			override def mouseDown(pos: (Float, Float), button: Button, mods: Set[Modifier]): Boolean =

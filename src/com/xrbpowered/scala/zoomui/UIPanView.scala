@@ -5,7 +5,7 @@ class UIPanView(parent: UIContainer) extends UIContainer(parent) {
 
 	private val panActor: DragActor = new DragActor {
 		override def notifyMouseDown(pos: (Float, Float), button: Button, mods: Set[Modifier]): Boolean =
-			button==UIElement.Right
+			button==Right
 		override def notifyMouseMove(dx: Float, dy: Float): Boolean = repaint {
 			val pix = pixelScale
 			pan(dx * pix, dy * pix)
@@ -21,6 +21,9 @@ class UIPanView(parent: UIContainer) extends UIContainer(parent) {
 	def panRange: (Int, Int) = _panRange
 	def panRange_= (range: (Int, Int)): Unit = { _panRange = range; checkPanRange() }
 
+	def setPanRangeForClient(w: Float, h: Float): Unit =
+		panRange = ((w - width).toInt max 0, (h - height).toInt max 0);
+	
 	private def checkPanRange(): Unit = { _pan = (
 		if (_panRange._1 != UIPanView.DISABLED)
 			if (_panRange._1 > 0) {

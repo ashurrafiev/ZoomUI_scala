@@ -27,6 +27,8 @@ class UIZoomView(parent: UIContainer) extends UIPanView(parent) {
 		checkScaleRange()
 	}
 
+	// FIXME scaled setPanRange? getPanRangeForClient?
+	
 	override def setPan(x: Float, y: Float): Unit = super.setPan(x * _scale, y * _scale)
 	override def pan(dx: Float, dy: Float): Unit = super.pan(dx * _scale, dy * _scale)
 
