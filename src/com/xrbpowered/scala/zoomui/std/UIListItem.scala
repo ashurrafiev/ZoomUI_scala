@@ -3,6 +3,7 @@ package com.xrbpowered.scala.zoomui.std
 import java.awt.{Color, Font}
 
 import com.xrbpowered.scala.zoomui.{GraphAssist, UIElement}
+import com.xrbpowered.scala.zoomui.std.text.UITextBox
 
 class UIListItem[T](val list: UIListBox[T], val index: Int, val data: T) extends UIElement(Some(list.view)) {
 	import UIElement._

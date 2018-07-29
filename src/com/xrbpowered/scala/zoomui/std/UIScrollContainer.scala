@@ -3,6 +3,7 @@ package com.xrbpowered.scala.zoomui.std
 import java.awt.Color
 
 import com.xrbpowered.scala.zoomui.{GraphAssist, UIContainer, UIPanView, UIElement}
+import com.xrbpowered.scala.zoomui.std.text.UITextBox
 
 abstract class UIScrollContainer(parent: UIContainer) extends UIContainer(parent) {
 	import UIElement._
@@ -34,6 +35,12 @@ abstract class UIScrollContainer(parent: UIContainer) extends UIContainer(parent
 	}
 
 	def layoutView(): Float
+	
+	override def paintChildren(g: GraphAssist): Unit = {
+		super.paintChildren(g)
+		paintBorder(g)
+	}
+	def paintBorder(g: GraphAssist): Unit = g.border(this, colorBorder)
 
 	override def mouseScroll(pos: (Float, Float), delta: Float, mods: Set[Modifier]): Boolean =
 		super.mouseScroll(pos, delta, mods) ||	(
@@ -47,4 +54,6 @@ abstract class UIScrollContainer(parent: UIContainer) extends UIContainer(parent
 object UIScrollContainer {
 	val scrollStep: Int = GraphAssist.ptToPixels(9f)
 	val wheelStep: Int = 3*scrollStep
+	
+	var colorBorder: Color = UITextBox.colorBorder
 }

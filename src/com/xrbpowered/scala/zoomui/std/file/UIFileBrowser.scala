@@ -2,11 +2,13 @@ package com.xrbpowered.scala.zoomui.std.file
 
 import java.awt.{Color, Font}
 import java.io.File
-import java.util
 
 import com.xrbpowered.scala.zoomui.BaseContainer.ModalBaseContainer
 import com.xrbpowered.scala.zoomui.{GraphAssist, UIContainer}
-import com.xrbpowered.scala.zoomui.std.{UIButton, UITextBox, UIToolButton}
+import com.xrbpowered.scala.zoomui.std.History
+import com.xrbpowered.scala.zoomui.std.text.UITextBox
+import com.xrbpowered.scala.zoomui.std.UIButton
+import com.xrbpowered.scala.zoomui.std.UIToolButton
 
 class UIFileBrowser(parent: ModalBaseContainer[Option[File]]) extends UIContainer(parent) {
 	import UIFileBrowser._
@@ -14,30 +16,38 @@ class UIFileBrowser(parent: ModalBaseContainer[Option[File]]) extends UIContaine
 	val view = new UIFileView(this, None, autoTypes = true)
 	view.onDirectorySet = _ => {
 		btnUp.setEnabled(view.directory.isDefined)
-		txtPath.text = view.directory.fold("This computer") { _.getAbsolutePath }
+		txtPath.editor.text = view.directory.fold("This computer") { _.getAbsolutePath }
 	}
-	view.onBrowse = _ => pushHistory()
-	view.onFileSelected = (_, file) => txtFileName.text = file.getName
+	view.onBrowse = _ => history.push()
+	view.onFileSelected = (_, file) => txtFileName.editor.text = file.getName
 
-	val history = new util.LinkedList[Option[File]]()
-	var historyIndex: Int = -1
+	val history = new History[Option[File]](64) {
+		override protected def apply(item: Option[File]) =
+			view.setDirectory(item)
+		override def push(): Unit =
+			push(view.directory)
+		override def update(): Unit = {
+			btnBack.setEnabled(canUndo)
+			btnFwd.setEnabled(canRedo)
+		}
+	}
 
 	// top pane
 	val txtPath = new UITextBox(this)
 	val btnBack: UIToolButton = new UIToolButton(this, UIToolButton.iconPath+"back.svg", 16, 2).disable
-	btnBack.onAction = _ => if(historyIndex > 0) repaint { setHistory(historyIndex - 1) }
+	btnBack.onAction = _ => repaint { history.undo() }
 	val btnFwd: UIToolButton = new UIToolButton(this, UIToolButton.iconPath+"forward.svg", 16, 2).disable
-	btnFwd.onAction = _ => if(historyIndex < history.size() - 1) repaint { setHistory(historyIndex + 1) }
+	btnFwd.onAction = _ => repaint { history.redo() }
 	val btnRefresh: UIToolButton = new UIToolButton(this, UIToolButton.iconPath+"refresh.svg", 16, 2)
 	btnRefresh.onAction = _ => repaint { view.refresh() }
 
 	// left pane
 	val btnUp = new UIToolButton(this, UIToolButton.iconPath+"up.svg", 32, 8)
-	btnUp.onAction = _ => repaint { if (view.upDirectory) pushHistory() }
+	btnUp.onAction = _ => repaint { if (view.upDirectory) history.push() }
 	val btnHome = new UIToolButton(this, UIToolButton.iconPath+"home.svg", 32, 8)
-	btnHome.onAction = _ => repaint { if (view.setDirectory(Some(new File(System.getProperty("user.home"))))) pushHistory() }
+	btnHome.onAction = _ => repaint { if (view.setDirectory(Some(new File(System.getProperty("user.home"))))) history.push() }
 	val btnRoots = new UIToolButton(this, UIToolButton.iconPath+"roots.svg", 32, 8)
-	btnRoots.onAction = _ => repaint { if (view.setDirectory(None)) pushHistory() }
+	btnRoots.onAction = _ => repaint { if (view.setDirectory(None)) history.push() }
 
 	// bottom pane
 	val txtFileName = new UITextBox(this)
@@ -47,21 +57,7 @@ class UIFileBrowser(parent: ModalBaseContainer[Option[File]]) extends UIContaine
 	btnCancel.onAction = _ => parent.window.close()
 
 	view.setDirectory(Some(new File(".")))
-	pushHistory()
-
-	private def setHistory(index: Int): Unit = {
-		historyIndex = index
-		view.setDirectory(history.get(index))
-		btnBack.setEnabled(index > 0)
-		btnFwd.setEnabled(index < history.size() - 1)
-	}
-
-	private def pushHistory(): Unit = {
-		historyIndex += 1
-		while (history.size > historyIndex) history.removeLast()
-		history.add(view.directory)
-		if (historyIndex > 0) btnBack.enable
-	}
+	history.push()
 
 	override def layout(): Unit = {
 		import com.xrbpowered.scala.zoomui.std.UIButton

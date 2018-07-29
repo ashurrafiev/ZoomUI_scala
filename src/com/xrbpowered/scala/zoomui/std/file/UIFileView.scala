@@ -279,10 +279,6 @@ class UIFileView(parent: UIContainer, val groupTypes: Option[Array[String]],
 	override def paintSelf(g: GraphAssist): Unit =
 		g.fill(this, colorBackground)
 
-	override def paintChildren(g: GraphAssist): Unit = {
-		super.paintChildren(g)
-		g.border(this, colorBorder)
-	}
 }
 object UIFileView {
 	private val dateFmt = new SimpleDateFormat("d MMM yyyy, HH:mm")
@@ -312,7 +308,6 @@ object UIFileView {
 	var font: Font = UIButton.font
 
 	var colorBackground: Color = Color.WHITE
-	var colorBorder: Color = UIListBox.colorBorder
 	var colorBorderLight = new Color(0xcccccc)
 	var colorText: Color = UIListItem.colorText
 	var colorHighlight: Color = UIListItem.colorHighlight

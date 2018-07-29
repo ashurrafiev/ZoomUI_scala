@@ -5,6 +5,7 @@ import com.xrbpowered.scala.zoomui.std._
 import com.xrbpowered.scala.zoomui._
 import com.xrbpowered.scala.zoomui.icons.SvgIcon
 import com.xrbpowered.scala.zoomui.swing.SwingFrame
+import com.xrbpowered.scala.zoomui.std.text.UITextBox
 
 class ZoomViewTest(parent: UIContainer) extends UIZoomView(parent) {
 
@@ -20,7 +21,7 @@ class ZoomViewTest(parent: UIContainer) extends UIZoomView(parent) {
 	list.onItemSelected = (_, item) => { println(s"${item.data} selected") }
 
 	val text = new UITextBox(this)
-	text.text = "Hello world"
+	text.editor.text = "Hello world"
 
 	val toolBtn = new UIToolButton(this, ZoomViewTest.fileIcon, 32, 8)
 	toolBtn.onAction = _ => {

@@ -1,6 +1,7 @@
 package com.xrbpowered.scala.zoomui
 
 import scala.collection.mutable.ArrayBuffer
+import com.xrbpowered.scala.utils.IteratorUtils._
 
 abstract class UIContainer(parent: Option[UIContainer]) extends UIElement(parent) {
 	import UIElement._
@@ -33,7 +34,7 @@ abstract class UIContainer(parent: Option[UIContainer]) extends UIElement(parent
 	}
 
 	def findChild(predicate: UIElement => Option[UIElement]): Option[UIElement] =
-		UIContainer.mappedFind(children.reverseIterator.withFilter(_.visible))(predicate)
+		children.reverseIterator.withFilter(_.visible).mappedFind(predicate)
 
 	override def elementAt(pos: (Float, Float)): Option[UIElement] = findChild(
 			_.elementAt(parentToLocal(pos))
@@ -51,10 +52,4 @@ abstract class UIContainer(parent: Option[UIContainer]) extends UIElement(parent
 			_.notifyMouseScroll(parentToLocal(pos), delta, mods)
 		).orElse(super.notifyMouseScroll(pos, delta, mods))
 
-}
-object UIContainer {
-	def mappedFind[A, B] (i: Iterator[A])(predicate: A => Option[B]): Option[B] =
-		if(i.hasNext)
-			predicate(i.next()).orElse( mappedFind(i)(predicate) )
-		else None
 }

@@ -3,6 +3,7 @@ package com.xrbpowered.scala.zoomui.std
 import java.awt.{Color, Graphics2D}
 
 import com.xrbpowered.scala.zoomui.{GraphAssist, UIContainer}
+import com.xrbpowered.scala.zoomui.std.text.UITextBox
 
 class UIListBox[T](parent: UIContainer, items: Seq[T]) extends UIScrollContainer(parent) {
 	import UIListBox._
@@ -52,13 +53,8 @@ class UIListBox[T](parent: UIContainer, items: Seq[T]) extends UIScrollContainer
 
 	override def paintSelf(g: GraphAssist): Unit =
 		g.fill(this, colorBackground)
-
-	override def paintChildren(g: GraphAssist): Unit = {
-		super.paintChildren(g)
-		g.border(this, colorBorder)
-	}
+		
 }
 object UIListBox {
 	var colorBackground: Color = UITextBox.colorBackground
-	var colorBorder: Color = UITextBox.colorBorder
 }
