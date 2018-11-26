@@ -18,7 +18,10 @@ abstract class UIWindow {
 
 	def center(): Unit
 
-	def notifyResized(): Unit = container.invalidateLayout()
+	def notifyResized(): Unit = {
+		container.invalidateLayout()
+		repaint()
+	}
 
 	def show(): Unit
 	def repaint(): Unit

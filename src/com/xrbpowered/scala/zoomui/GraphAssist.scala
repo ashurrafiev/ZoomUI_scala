@@ -9,7 +9,7 @@ import scala.language.implicitConversions
 class GraphAssist(val graph: Graphics2D) {
 	import GraphAssist._
 
-	private var _tx: util.LinkedList[AffineTransform] = new util.LinkedList[AffineTransform]()
+	private val _tx: util.LinkedList[AffineTransform] = new util.LinkedList[AffineTransform]()
 	def tx: AffineTransform = _tx.getFirst
 	def pushTx(): Unit = _tx.addFirst(graph.getTransform)
 	def popTx(): Unit = graph.setTransform(_tx.removeFirst())
@@ -18,7 +18,7 @@ class GraphAssist(val graph: Graphics2D) {
 	def translate(tx: Double, ty: Double): Unit = graph.translate(tx, ty)
 	def scale(scale: Double): Unit = graph.scale(scale, scale)
 
-	private var _clip: util.LinkedList[Rectangle] = new util.LinkedList[Rectangle]()
+	private val _clip: util.LinkedList[Rectangle] = new util.LinkedList[Rectangle]()
 	def pushClip(x: Float, y: Float, w: Float, h: Float): Boolean = {
 		val clip = graph.getClipBounds
 		val r = new Rectangle(x.toInt, y.toInt, w.toInt, h.toInt)

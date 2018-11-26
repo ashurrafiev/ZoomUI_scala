@@ -34,7 +34,7 @@ class BaseContainer(_window: UIWindow, private var _baseScale: Float) extends UI
 			val ui = super.notifyMouseDown(pos, button, mods)
 			if (ui != uiInitiator) uiInitiator.foreach { _.mouseReleased() }
 			uiInitiator = ui
-			if (uiFocused.isDefined && uiFocused != uiInitiator) resetFocus()
+			// if (uiFocused.isDefined && uiFocused != uiInitiator) resetFocus() // FIXME better strategy for losing focus?
 		}
 		Some(this)
 	}

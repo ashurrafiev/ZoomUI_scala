@@ -19,7 +19,7 @@ class SwingFrame(title: String, w: Int, h: Int, canResize: Boolean) extends UIWi
 
 	val panel = new BasePanel(this)
 	frame.setContentPane(panel)
-	clientSize = (w, h)
+	if(w>0 && h>0) clientSize = (w, h)
 	center()
 
 	override def clientWidth: Int = panel.getWidth
