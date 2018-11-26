@@ -11,6 +11,7 @@ import com.xrbpowered.scala.zoomui.{GraphAssist, UIContainer, UIElement, UIHover
 import com.xrbpowered.scala.zoomui.std._
 
 import scala.collection.mutable.ArrayBuffer
+import com.xrbpowered.scala.zoomui.UIWindowFactory
 
 class UIFileView(parent: UIContainer, val groupTypes: Option[Array[String]],
 		val autoTypes: Boolean) extends UIScrollContainer(parent) {
@@ -271,7 +272,7 @@ class UIFileView(parent: UIContainer, val groupTypes: Option[Array[String]],
 			if (setDirectory(selectedFile)) onBrowse(this)
 			else {
 				import UIMessageBox._
-				show("Error", "Access denied.", Some(iconError), Array(Ok), None)
+				show(base.window.factory, "Error", "Access denied.", Some(iconError), Array(Ok), None)
 			}
 		else onSelectedFileClicked(this)
 	}

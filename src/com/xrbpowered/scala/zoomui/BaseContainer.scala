@@ -100,7 +100,7 @@ class BaseContainer(_window: UIWindow, private var _baseScale: Float) extends UI
 
 	def baseScale: Float = _baseScale
 	def baseScale_= (scale: Float): Unit = {
-		this._baseScale = if(scale>0f) scale else UIWindow.getSystemScale
+		this._baseScale = if(scale>0f) scale else window.factory.baseScale
 		invalidateLayout()
 	}
 

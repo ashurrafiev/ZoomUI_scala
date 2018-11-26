@@ -6,13 +6,13 @@ import java.awt.event.{WindowAdapter, WindowEvent}
 import com.xrbpowered.scala.zoomui.UIWindow
 import javax.swing.{JFrame, WindowConstants}
 
-class SwingFrame(title: String, w: Int, h: Int, canResize: Boolean) extends UIWindow {
-	def this(title: String, w: Int, h: Int) = this(title, w, h, true)
-	
+class SwingFrame(factory: SwingWindowFactory, title: String, w: Int, h: Int, canResize: Boolean, undecorated: Boolean) extends UIWindow(factory) {
+
 	val frame: JFrame = new JFrame
 	frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)
 	frame.setTitle(title)
-	frame.setResizable(canResize)
+	frame.setResizable(canResize && !undecorated)
+	frame.setUndecorated(undecorated)
 	frame.addWindowListener(new WindowAdapter {
 		override def windowClosing(e: WindowEvent): Unit = requestClosing()
 	})

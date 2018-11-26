@@ -26,9 +26,9 @@ class ZoomViewTest(parent: UIContainer) extends UIZoomView(parent) {
 	val toolBtn = new UIToolButton(this, ZoomViewTest.fileIcon, 32, 8)
 	toolBtn.onAction = _ => {
 		import UIMessageBox._
-		show("Alert", "An instance of <b>UIToolButton</b> has been clicked" +
+		/*show("Alert", "An instance of <b>UIToolButton</b> has been clicked" +
 			" invoking <b>UIMessageBox</b> via <b>onAction</b> handler.",
-			Some(iconAlert), Array(Ok), None)
+			Some(iconAlert), Array(Ok), None)*/
 	}
 
 	val html: UIFormattedLabel = new UIFormattedLabel(this, "This is an example of a <b>formatted label</b>. Click <a href=\"link\">here</a> to test if the link works or not.") {
@@ -66,7 +66,7 @@ object ZoomViewTest {
 	val fileIcon = new SvgIcon(UIToolButton.iconPath+"file.svg", 160, UIToolButton.palette)
 
 	def main(args: Array[String]): Unit = {
-		val frame = new SwingFrame("ZoomViewTest", 800, 600)
+		val frame = UIWindowFactory.instance.create("ZoomViewTest", 800, 600, canResize = true)
 		new UIContainer(frame.container) {
 			val top: UIZoomView = new ZoomViewTest(this)
 			val bottom: UIElement = new UIElement(Some(this)) {

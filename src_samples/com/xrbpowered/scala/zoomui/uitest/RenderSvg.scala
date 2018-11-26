@@ -11,6 +11,7 @@ import com.xrbpowered.scala.zoomui.icons.SvgFile
 import java.awt.RenderingHints
 import java.awt.Rectangle
 import com.xrbpowered.scala.zoomui.UIWindow
+import com.xrbpowered.scala.zoomui.UIWindowFactory
 
 class RenderSvg(parent: UIContainer) extends UIZoomView(parent) {
 
@@ -32,8 +33,8 @@ class RenderSvg(parent: UIContainer) extends UIZoomView(parent) {
 }
 object RenderSvg {
 	def main(args: Array[String]): Unit = {
-		UIWindow.baseScale = 1
-		val frame = new SwingFrame("RenderSvg", 1800, 960)
+		UIWindowFactory.instance.baseScale = 1
+		val frame = UIWindowFactory.instance.create("RenderSvg", 1800, 960, canResize = true)
 		new RenderSvg(frame.container)
 		frame.show
 	}

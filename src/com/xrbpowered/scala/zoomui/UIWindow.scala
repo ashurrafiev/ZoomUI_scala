@@ -2,12 +2,11 @@ package com.xrbpowered.scala.zoomui
 
 import java.awt.{Cursor, Toolkit}
 
-import com.xrbpowered.scala.zoomui.UIWindow.baseScale
 import com.xrbpowered.scala.zoomui.std.UIMessageBox
 import com.xrbpowered.scala.zoomui.std.UIMessageBox.{Cancel, Ok, iconQuestion, show}
 
-abstract class UIWindow {
-	protected def createContainer = new BaseContainer(this, UIWindow.baseScale)
+abstract class UIWindow(val factory: UIWindowFactory) {
+	protected def createContainer = new BaseContainer(this, factory.baseScale)
 	protected val _container: BaseContainer = createContainer
 	def container: BaseContainer = _container
 
@@ -38,17 +37,10 @@ abstract class UIWindow {
 	def close(): Unit = onClose(this)
 }
 object UIWindow {
-	private var _baseScale: Float = getSystemScale
-	def baseScale: Float = _baseScale
-	def baseScale_= (scale: Float): Unit =
-		_baseScale = if(scale>0f) scale else getSystemScale
-
-	def getSystemScale: Float = Toolkit.getDefaultToolkit.getScreenResolution / 96f
-
 	var confirmCosing: UIWindow => Boolean = frame => {
 		import UIMessageBox._
 		show("Exit", "Do you want to close the application?",
-			Some(iconQuestion), Array(Ok, Cancel)) { (_, res) => {
+			Some(iconQuestion), Array(Ok, Cancel)) { res => {
 			if(res==Ok) frame.close()
 		} }
 		false

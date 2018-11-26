@@ -6,8 +6,7 @@ import java.awt.event.{WindowAdapter, WindowEvent}
 import com.xrbpowered.scala.zoomui.UIModalWindow
 import javax.swing.{JDialog, WindowConstants}
 
-class SwingModalDialog[A](title: String, w: Int, h: Int, canResize: Boolean,
-		defaultResult: A) extends UIModalWindow[A](defaultResult) {
+class SwingModalDialog[A](factory: SwingWindowFactory, title: String, w: Int, h: Int, canResize: Boolean) extends UIModalWindow[A](factory) {
 	val dialog: JDialog = new JDialog
 	dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)
 	dialog.setTitle(" "+title)

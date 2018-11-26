@@ -10,7 +10,7 @@ import com.xrbpowered.scala.zoomui.std.text.UITextBox
 import com.xrbpowered.scala.zoomui.std.UIButton
 import com.xrbpowered.scala.zoomui.std.UIToolButton
 
-class UIFileBrowser(parent: ModalBaseContainer[Option[File]]) extends UIContainer(parent) {
+class UIFileBrowser(parent: UIContainer, resultHandler: Option[File] => Unit, cancelHandler: () => Unit) extends UIContainer(parent) {
 	import UIFileBrowser._
 
 	val view = new UIFileView(this, None, autoTypes = true)
@@ -52,9 +52,9 @@ class UIFileBrowser(parent: ModalBaseContainer[Option[File]]) extends UIContaine
 	// bottom pane
 	val txtFileName = new UITextBox(this)
 	val btnOk = new UIButton(this, "OK")
-	btnOk.onAction = _ => parent.window.closeWithResult(view.selectedFile)
+	btnOk.onAction = _ => resultHandler(view.selectedFile)
 	val btnCancel = new UIButton(this, "Cancel")
-	btnCancel.onAction = _ => parent.window.close()
+	btnCancel.onAction = _ => cancelHandler()
 
 	view.setDirectory(Some(new File(".")))
 	history.push()

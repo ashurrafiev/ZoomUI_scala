@@ -11,6 +11,7 @@ import com.xrbpowered.scala.zoomui.GraphAssist
 import java.awt.Font
 import com.xrbpowered.scala.zoomui.UIWindow
 import com.xrbpowered.scala.zoomui.std.UIScrollContainer
+import com.xrbpowered.scala.zoomui.UIWindowFactory
 
 object TextEditTest {
 	val TEST_INPUT = "src_samples/com/xrbpowered/scala/zoomui/uitest/TextEditTest.scala"
@@ -31,7 +32,7 @@ object TextEditTest {
 	}
 	
 	def main(args: Array[String]): Unit = {
-		val frame = new SwingFrame("TextEditTest", 800, 600)
+		val frame = UIWindowFactory.instance.create("TextEditTest", 800, 600, canResize = true)
 		val text = new UITextArea(frame.container) {
 			override def paintBorder(g: GraphAssist): Unit =
 				g.border(this, GraphAssist.Top, UIScrollContainer.colorBorder)

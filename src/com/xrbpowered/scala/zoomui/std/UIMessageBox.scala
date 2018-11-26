@@ -79,15 +79,21 @@ object UIMessageBox {
 
 	val iconSize = 32
 
-	def show(title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult],
-			 onResult: Option[(UIModalWindow[MessageResult], MessageResult) => Unit]): Unit = {
+	def show(factory: UIWindowFactory, title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult],
+			 onResult: Option[MessageResult => Unit]): Unit = {
 		val width = Math.max(options.length * 2 + 1, 6) * (UIButton.defaultWidth + 4) / 2 + 32
-		val dlg = new SwingModalDialog[MessageResult](title, width, UIButton.defaultHeight + 40, false, Cancel)
-		onResult.foreach { dlg.onResult = _ }
+		val dlg = factory.createModal[MessageResult](title, width, UIButton.defaultHeight + 40, false,
+				onResult, UIModalWindow.cancelWithDefault(onResult, Cancel))
 		new UIMessageBox(dlg.container, message, icon, options)
 		dlg.show()
 	}
+	def show(factory: UIWindowFactory, title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult])
+			(onResult: MessageResult => Unit): Unit =
+		show(factory, title, message, icon, options, Some(onResult))
+	def show(title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult],
+			 onResult: Option[MessageResult => Unit]): Unit =
+		show(UIWindowFactory.instance, title, message, icon, options, onResult)
 	def show(title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult])
-			(onResult: (UIModalWindow[MessageResult], MessageResult) => Unit): Unit =
-		show(title, message, icon, options, Some(onResult))
+			(onResult: MessageResult => Unit): Unit =
+		show(UIWindowFactory.instance, title, message, icon, options, Some(onResult))
 }

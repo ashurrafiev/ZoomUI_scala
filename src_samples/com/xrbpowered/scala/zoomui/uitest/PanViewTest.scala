@@ -68,6 +68,6 @@ object PanViewTest {
 	val font: Font = new Font("Tahoma", Font.PLAIN, GraphAssist.ptToPixels(9f))
 
 	def main(args: Array[String]): Unit = {
-		new PanViewTest(new SwingFrame("PanViewTest", 400, 300).container).base.window.show()
+		new PanViewTest(UIWindowFactory.instance.create("PanViewTest", 400, 300, canResize = true).container).base.window.show()
 	}
 }
