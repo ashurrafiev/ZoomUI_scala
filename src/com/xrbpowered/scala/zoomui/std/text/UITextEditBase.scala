@@ -218,13 +218,7 @@ class UITextEditBase(parent: UIPanView, val singleLine: Boolean) extends UIHover
 		if(_lineHeight>0 && !singleLine)
 			_displayLine = (parent.getPan._2 / _pixelScale / _lineHeight).toInt
 
-		val aa = g.graph.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-		g.graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-
-		g.pushTx()
-		g.clearTransform()
-		g.translate(g.tx.getTranslateX, g.tx.getTranslateY)
-		_pixelScale = pixelScale
+		_pixelScale = g.startPixelMode(this)
 		
 		g.setFont(font.deriveFont(font.getSize/_pixelScale))
 		updateMetrics(g)
@@ -268,8 +262,7 @@ class UITextEditBase(parent: UIPanView, val singleLine: Boolean) extends UIHover
 			_updateSize = false
 		}
 		
-		g.popTx()
-		g.graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING, aa)
+		g.finishPixelMode()
 	}
 	
 	protected def drawLine(g: GraphAssist, lineIndex: Int, lineStart: Int, lineEnd: Int, y: Int, bg: Color, drawCursor: Boolean): Unit = {

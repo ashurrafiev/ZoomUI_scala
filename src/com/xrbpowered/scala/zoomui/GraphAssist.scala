@@ -30,6 +30,34 @@ class GraphAssist(val graph: Graphics2D) {
 		else false
 	}
 	def popClip(): Unit = graph.setClip(_clip.removeFirst())
+	
+	private val _aa: util.LinkedList[Boolean] = new util.LinkedList[Boolean]()
+	def antialiasing: Boolean =
+		graph.getRenderingHint(RenderingHints.KEY_ANTIALIASING)==RenderingHints.VALUE_ANTIALIAS_ON
+	def pushAntialiasing(aa: Boolean): Unit = {
+		_aa.addFirst(antialiasing)
+		graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				if(aa) RenderingHints.VALUE_ANTIALIAS_ON else RenderingHints.VALUE_ANTIALIAS_OFF)
+	}
+	def popAntialiasing(): Unit = {
+		val aa = _aa.removeFirst()
+		graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				if(aa) RenderingHints.VALUE_ANTIALIAS_ON else RenderingHints.VALUE_ANTIALIAS_OFF)
+	}
+
+	private val _pureStroke: util.LinkedList[Boolean] = new util.LinkedList[Boolean]()
+	def pureStroke: Boolean =
+		graph.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL)==RenderingHints.VALUE_STROKE_PURE
+	def pushPureStroke(pure: Boolean): Unit = {
+		_pureStroke.addFirst(antialiasing)
+		graph.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+				if(pure) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+	}
+	def popPureStroke(): Unit = {
+		val pure = _pureStroke.removeFirst()
+		graph.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+				if(pure) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+	}
 
 	def setColor(c: Color): Unit = graph.setColor(c)
 	def setFont(f: Font): Unit = graph.setFont(f)
@@ -55,6 +83,36 @@ class GraphAssist(val graph: Graphics2D) {
 	def border(e: UIElement, v: VAlign): Unit = line(0, v.y(e.height), e.width, v.y(e.height))
 	def border(e: UIElement, v: VAlign, c: Color): Unit = { setColor(c); border(e, v) }
 
+	def startPixelMode(e: UIElement, antialias: Boolean): Float = {
+		pushAntialiasing(antialias)
+		pushTx()
+		clearTransform()
+		translate(tx.getTranslateX, tx.getTranslateY)
+		e.pixelScale
+	}
+	def startPixelMode(e: UIElement): Float = startPixelMode(e, false)
+	def finishPixelMode(): Unit = {
+		popTx()
+		popAntialiasing()
+	}
+	
+	def pixelBorder(e: UIElement, thickness: Int, fill: Option[Color], stroke: Option[Color]): Unit = {
+		val pixelScale = startPixelMode(e)
+		val w = Math.ceil(e.width / pixelScale).toInt
+		val h = Math.ceil(e.height / pixelScale).toInt
+		fill.foreach(c => {
+			setColor(c)
+			graph.fillRect(0, 0, w, h)
+		})
+		stroke.foreach(c => {
+			resetStroke()
+			setColor(c)
+			for (i <- 0 until thickness)
+				graph.drawRect(i, i, w-i*2-1, h-i*2-1)
+		})
+		finishPixelMode()
+	}
+	
 	def drawString(str: String, x: Float, y: Float): Unit = graph.drawString(str, x, y)
 
 	def drawString(str: String, x: Float, y: Float, align: Align): Float = {

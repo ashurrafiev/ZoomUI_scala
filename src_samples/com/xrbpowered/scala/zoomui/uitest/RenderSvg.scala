@@ -22,8 +22,9 @@ class RenderSvg(parent: UIContainer) extends UIZoomView(parent) {
 		override def visible(clip: Rectangle): Boolean = visible
 		
 		override def paint(g: GraphAssist): Unit = {
-			g.graph.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
+			g.pushPureStroke(true)
 			svg.render(g.graph, 10)
+			g.popPureStroke()
 		}
 	}
 	scaleRange = (0.1f, 10)

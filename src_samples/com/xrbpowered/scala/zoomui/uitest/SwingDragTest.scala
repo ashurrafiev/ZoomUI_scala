@@ -26,7 +26,7 @@ class SwingDragTest(parent: UIContainer) extends UIContainer(parent) {
 	}
 	
 	override def paintSelf(g: GraphAssist): Unit = {
-		g.fill(this, Color.WHITE)
+		g.pixelBorder(this, 2, Some(Color.WHITE), Some(Color.BLACK))
 	}
 
 	override def acceptDrag(pos: (Float, Float), button: Button, mods: Set[Modifier]): Option[DragActor] =
