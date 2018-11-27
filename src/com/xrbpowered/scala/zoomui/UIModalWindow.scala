@@ -18,9 +18,4 @@ abstract class UIModalWindow[A](factory: UIWindowFactory) extends UIWindow(facto
 object UIModalWindow {
 	def cancelWithDefault[A](onResult: A => Unit, defaultResult: A): () => Unit =
 		() => { onResult(defaultResult) }
-	def cancelWithDefault[A](onResult: Option[A => Unit], defaultResult: A): Option[() => Unit] =
-		onResult match {
-			case Some(res) => Some(cancelWithDefault[A](res, defaultResult))
-			case None => None
-		}
 }

@@ -10,6 +10,9 @@ abstract class UIWindow(val factory: UIWindowFactory) {
 	protected val _container: BaseContainer = createContainer
 	def container: BaseContainer = _container
 
+	protected var _exitOnClose = false
+	def exitOnClose(exit: Boolean): UIWindow = { _exitOnClose = exit; this }
+	
 	def clientWidth: Int
 	def clientHeight: Int
 	def clientSize: (Int, Int) = (clientWidth, clientHeight)
@@ -28,7 +31,7 @@ abstract class UIWindow(val factory: UIWindowFactory) {
 	def setCursor(cursor: Cursor)
 
 	var onClosing: this.type => Boolean = { _ => true }
-	var onClose: this.type => Unit = { _ => () }
+	var onClose: this.type => Unit = { _ => if(_exitOnClose) System.exit(0) }
 
 	def closing: Boolean = onClosing(this)
 	def requestClosing(): Boolean =
@@ -39,10 +42,10 @@ abstract class UIWindow(val factory: UIWindowFactory) {
 object UIWindow {
 	var confirmCosing: UIWindow => Boolean = frame => {
 		import UIMessageBox._
-		show("Exit", "Do you want to close the application?",
+		show(frame.factory, "Exit", "Do you want to close the application?",
 			Some(iconQuestion), Array(Ok, Cancel)) { res => {
-			if(res==Ok) frame.close()
-		} }
+				if(res==Ok) frame.close()
+			} }
 		false
 	}
 }

@@ -5,8 +5,10 @@ import java.awt.event.{WindowAdapter, WindowEvent}
 
 import com.xrbpowered.scala.zoomui.UIWindow
 import javax.swing.{JFrame, WindowConstants}
+import java.awt.Frame
 
 class SwingFrame(factory: SwingWindowFactory, title: String, w: Int, h: Int, canResize: Boolean, undecorated: Boolean) extends UIWindow(factory) {
+	exitOnClose(true)
 
 	val frame: JFrame = new JFrame
 	frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)
@@ -30,5 +32,7 @@ class SwingFrame(factory: SwingWindowFactory, title: String, w: Int, h: Int, can
 	override def repaint(): Unit = panel.repaint()
 	override def setCursor(cursor: Cursor): Unit = panel.setCursor(cursor)
 
-	override def close(): Unit = { frame.dispose(); super.close(); System.exit(0) }
+	override def close(): Unit = { frame.dispose(); super.close() }
+	
+	def maximize(): SwingFrame = { frame.setExtendedState(Frame.MAXIMIZED_BOTH); this }
 }

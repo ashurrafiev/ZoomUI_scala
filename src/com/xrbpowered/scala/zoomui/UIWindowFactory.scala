@@ -12,7 +12,7 @@ abstract class UIWindowFactory {
 
 	def create(title: String, w: Int, h: Int, canResize: Boolean): UIWindow
 	def createModal[A](title: String, w: Int, h: Int, canResize: Boolean,
-			onResult: Option[A => Unit], onCancel: Option[() => Unit]): UIModalWindow[A]
+			onResult: A => Unit, onCancel: () => Unit): UIModalWindow[A]
 	def createUndecorated(w: Int, h: Int): UIWindow
 }
 object UIWindowFactory {

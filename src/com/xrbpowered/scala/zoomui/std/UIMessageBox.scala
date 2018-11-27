@@ -10,7 +10,7 @@ import com.xrbpowered.scala.zoomui.swing.SwingModalDialog
 import com.xrbpowered.scala.zoomui._
 
 class UIMessageBox(parent: ModalBaseContainer[MessageResult],
-		message: String, val icon: Option[SvgIcon], val options: Array[MessageResult])
+		message: String, val icon: Option[SvgIcon], val options: Seq[MessageResult])
 		extends UIContainer(parent) with KeyInputHandler {
 
 	val buttons: Seq[UIButton] = for(i <- options.indices) yield new UIButton(this, options(i).label) {
@@ -79,21 +79,27 @@ object UIMessageBox {
 
 	val iconSize = 32
 
-	def show(factory: UIWindowFactory, title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult],
-			 onResult: Option[MessageResult => Unit]): Unit = {
+	def show(factory: UIWindowFactory, title: String, message: String, icon: Option[SvgIcon], options: Seq[MessageResult])
+			(onResult: MessageResult => Unit): Unit = {
 		val width = Math.max(options.length * 2 + 1, 6) * (UIButton.defaultWidth + 4) / 2 + 32
 		val dlg = factory.createModal[MessageResult](title, width, UIButton.defaultHeight + 40, false,
 				onResult, UIModalWindow.cancelWithDefault(onResult, Cancel))
 		new UIMessageBox(dlg.container, message, icon, options)
 		dlg.show()
 	}
-	def show(factory: UIWindowFactory, title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult])
+	def show(factory: UIWindowFactory, title: String, message: String, icon: Option[SvgIcon], options: Seq[MessageResult],
+			onResultOpt: Option[MessageResult => Unit]): Unit =
+		onResultOpt match {
+			case Some(onResult) => show(factory, title, message, icon, options)(onResult)
+			case None => show(factory, title, message, icon, options) { _ => () }
+		}
+	def show(title: String, message: String, icon: Option[SvgIcon], options: Seq[MessageResult])
 			(onResult: MessageResult => Unit): Unit =
-		show(factory, title, message, icon, options, Some(onResult))
-	def show(title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult],
-			 onResult: Option[MessageResult => Unit]): Unit =
-		show(UIWindowFactory.instance, title, message, icon, options, onResult)
-	def show(title: String, message: String, icon: Option[SvgIcon], options: Array[MessageResult])
-			(onResult: MessageResult => Unit): Unit =
-		show(UIWindowFactory.instance, title, message, icon, options, Some(onResult))
+		show(UIWindowFactory.instance, title, message, icon, options)(onResult)
+	def show(title: String, message: String, icon: Option[SvgIcon], options: Seq[MessageResult],
+			onResultOpt: Option[MessageResult => Unit]): Unit =
+		onResultOpt match {
+			case Some(onResult) => show(UIWindowFactory.instance, title, message, icon, options)(onResult)
+			case None => show(UIWindowFactory.instance, title, message, icon, options) { _ => () }
+		}
 }
