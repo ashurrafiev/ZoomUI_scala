@@ -5,6 +5,7 @@ import java.awt.{Dimension, Graphics, Graphics2D}
 
 import com.xrbpowered.scala.zoomui._
 import javax.swing.{JPanel, SwingUtilities}
+import java.awt.Point
 
 class BasePanel(val window: UIWindow) extends JPanel {
 	import BasePanel._
@@ -75,6 +76,18 @@ class BasePanel(val window: UIWindow) extends JPanel {
 		window.notifyResized()
 	}
 
+	private val _pt = new Point 
+	def baseToScreen(pos: (Float, Float)): (Int, Int) = {
+		_pt.setLocation(pos._1, pos._2)
+		SwingUtilities.convertPointToScreen(_pt, this)
+		return (_pt.x, _pt.y);
+	}
+	def screenToBase(pos: (Int, Int)): (Float, Float) = {
+		_pt.setLocation(pos._1, pos._2)
+		SwingUtilities.convertPointFromScreen(_pt, this)
+		return (_pt.x, _pt.y);
+	}
+	
 }
 object BasePanel {
 	import UIElement._

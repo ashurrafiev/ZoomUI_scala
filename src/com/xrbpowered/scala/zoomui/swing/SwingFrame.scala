@@ -27,6 +27,9 @@ class SwingFrame(factory: SwingWindowFactory, title: String, w: Int, h: Int, can
 	override def clientWidth: Int = panel.getWidth
 	override def clientHeight: Int = panel.getHeight
 	override def clientSize_=(size: (Int, Int)): Unit = panel.resize(size)
+	override def x: Int = frame.getX
+	override def y: Int = frame.getY
+	override def moveTo(x: Int, y: Int): Unit = frame.setLocation(x, y)
 	override def center(): Unit = frame.setLocationRelativeTo(null)
 	override def show(): Unit = frame.setVisible(true)
 	override def repaint(): Unit = panel.repaint()
@@ -35,4 +38,7 @@ class SwingFrame(factory: SwingWindowFactory, title: String, w: Int, h: Int, can
 	override def close(): Unit = { frame.dispose(); super.close() }
 	
 	def maximize(): SwingFrame = { frame.setExtendedState(Frame.MAXIMIZED_BOTH); this }
+	
+	override def baseToScreen(pos: (Float, Float)): (Int, Int) = panel.baseToScreen(pos)
+	override def screenToBase(pos: (Int, Int)): (Float, Float) = panel.screenToBase(pos)
 }

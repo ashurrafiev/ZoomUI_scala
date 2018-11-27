@@ -18,7 +18,12 @@ abstract class UIWindow(val factory: UIWindowFactory) {
 	def clientSize: (Int, Int) = (clientWidth, clientHeight)
 	def clientSize_= (size: (Int, Int)): Unit
 
+	def x: Int
+	def y: Int
+	def moveTo(x: Int, y: Int): Unit
 	def center(): Unit
+	def move(dx: Int, dy: Int): Unit =
+		moveTo(x+dx, y+dy)
 
 	def notifyResized(): Unit = {
 		container.invalidateLayout()
@@ -28,6 +33,9 @@ abstract class UIWindow(val factory: UIWindowFactory) {
 	def show(): Unit
 	def repaint(): Unit
 
+	def baseToScreen(pos: (Float, Float)): (Int, Int)
+	def screenToBase(pos: (Int, Int)): (Float, Float)
+	
 	def setCursor(cursor: Cursor)
 
 	var onClosing: this.type => Boolean = { _ => true }

@@ -25,6 +25,9 @@ class SwingModalDialog[A](factory: SwingWindowFactory, title: String, w: Int, h:
 	override def clientWidth: Int = panel.getWidth
 	override def clientHeight: Int = panel.getHeight
 	override def clientSize_=(size: (Int, Int)): Unit = panel.resize(size)
+	override def x: Int = dialog.getX
+	override def y: Int = dialog.getY
+	override def moveTo(x: Int, y: Int): Unit = dialog.setLocation(x, y)
 	override def center(): Unit = dialog.setLocationRelativeTo(null)
 	override def show(): Unit = dialog.setVisible(true)
 	override def repaint(): Unit = panel.repaint()
@@ -32,5 +35,7 @@ class SwingModalDialog[A](factory: SwingWindowFactory, title: String, w: Int, h:
 
 	override def closeWithResult(result: A): Unit = { dialog.dispose(); super.closeWithResult(result) }
 
+	override def baseToScreen(pos: (Float, Float)): (Int, Int) = panel.baseToScreen(pos)
+	override def screenToBase(pos: (Int, Int)): (Float, Float) = panel.screenToBase(pos)
 }
 

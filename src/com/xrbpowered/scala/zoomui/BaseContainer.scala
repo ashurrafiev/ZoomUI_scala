@@ -15,7 +15,7 @@ class BaseContainer(_window: UIWindow, private var _baseScale: Float) extends UI
 	private var drag: Option[DragActor] = None
 	private var uiInitiator: Option[UIElement] = None
 	private var initiatorButtonMods: (Button, Set[Modifier]) = (Left, Set.empty)
-	private var prevMousePoint: (Float, Float) = (0, 0)
+	private var prevMousePoint: (Int, Int) = (0, 0)
 
 	private var invalidLayout: Boolean = true
 	override def invalidateLayout(): Unit = { invalidLayout = true }
@@ -29,7 +29,7 @@ class BaseContainer(_window: UIWindow, private var _baseScale: Float) extends UI
 
 	override def notifyMouseDown(pos: (Float, Float), button: Button, mods: Set[Modifier]): Option[UIElement] = {
 		if (!dragMode) {
-			prevMousePoint = pos
+			prevMousePoint = window.baseToScreen(pos)
 			initiatorButtonMods = (button, mods)
 			val ui = super.notifyMouseDown(pos, button, mods)
 			if (ui != uiInitiator) uiInitiator.foreach { _.mouseReleased() }
@@ -73,13 +73,14 @@ class BaseContainer(_window: UIWindow, private var _baseScale: Float) extends UI
 		}
 	}
 	def mouseDragged(pos: (Float, Float)): Unit = {
+		val spos = window.baseToScreen(pos)
 		if (drag.isEmpty)
 			drag = uiInitiator.fold(None: Option[DragActor]) {
-				_.acceptDrag(prevMousePoint, initiatorButtonMods._1, initiatorButtonMods._2)
+				_.acceptDrag(window.screenToBase(prevMousePoint), initiatorButtonMods._1, initiatorButtonMods._2)
 			}
 		if (dragMode) {
-			drag = if (drag.get.notifyMouseMove(pos._1 - prevMousePoint._1, pos._2 - prevMousePoint._2)) drag else None
-			prevMousePoint = pos
+			drag = if (drag.get.notifyMouseMove(spos._1 - prevMousePoint._1, spos._2 - prevMousePoint._2)) drag else None
+			prevMousePoint = spos
 		}
 		updateMouseMove(pos)
 	}
@@ -133,6 +134,7 @@ class BaseContainer(_window: UIWindow, private var _baseScale: Float) extends UI
 		if (invalidLayout) layout()
 		g.graph.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
 		g.graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+		g.graph.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
 		super.paint(g)
 	}
 
